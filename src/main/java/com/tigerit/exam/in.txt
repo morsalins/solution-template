@@ -23,7 +23,7 @@ FROM table_a ta
 JOIN table_b tb
 ON ta.a2 = tb.b2
 
-SELECT ta.a1, ta.a2, tb.b1
+SELECT ta.a2, tb.b1, ta.a1
 FROM table_a ta
 JOIN table_b tb
 ON tb.b2 = ta.a2
@@ -46,8 +46,8 @@ id_b b1 b2 b3
 11 12 13 5
 3
 SELECT *
-FROM table_b
-JOIN table_a
+FROM table_a
+JOIN table_b
 ON table_b.b3 = table_a.a2
 
 SELECT *

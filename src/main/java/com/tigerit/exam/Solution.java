@@ -36,20 +36,21 @@ public class Solution implements Runnable {
 
             ArrayList<String> table1Columns = new ArrayList<>();
             ArrayList<String> table2Columns = new ArrayList<>();
+            ArrayList<Integer> tableColLink = new ArrayList<>();
 
             DatabaseTable table1 = parseFrom(query[1]); //IO.printLine(table1.toString());
             DatabaseTable table2 = parseJoin(query[2]); //IO.printLine(table2.toString());
             int[] comparingColumns = parseCondition(query[3], table1); //IO.printLine(comparingColumns[0] + " " + comparingColumns[1]);
-            parseSelect(query[0], table1, table2, table1Columns, table2Columns);
+            parseSelect(query[0], table1, table2, table1Columns, table2Columns, tableColLink);
 
-            DatabaseTable output = getJoinedResult(table1, table1Columns, table2, table2Columns, comparingColumns);
+            DatabaseTable output = getJoinedResult(table1, table1Columns, table2, table2Columns, comparingColumns, tableColLink);
             //IO.printLine(table1.toString()); IO.printLine(table2.toString()); IO.printLine(output.toString());
             output.printResult();
         }
     }
 
-    private DatabaseTable getJoinedResult(DatabaseTable t1, ArrayList<String> t1Columns,
-                                           DatabaseTable t2, ArrayList<String> t2Columns, int[] compCols) {
+    private DatabaseTable getJoinedResult(DatabaseTable t1, ArrayList<String> t1Columns, DatabaseTable t2,
+                                          ArrayList<String> t2Columns, int[] compCols, ArrayList<Integer> tcLink) {
         int t1CompCol = compCols[0];
         int t2CompCol = compCols[1];
 
@@ -57,8 +58,7 @@ public class Solution implements Runnable {
         ArrayList<Integer> t2ColumnPos = new ArrayList<>();
 
         ArrayList<ArrayList<Integer> > data = new ArrayList<>();
-        ArrayList<String> columnsNames = new ArrayList<>(t1Columns);
-        columnsNames.addAll(t2Columns);
+        ArrayList<String> columnsNames = new ArrayList<>();
         HashMap<String, Integer> columnPos = new HashMap<>();
 
         for (String str : t1Columns) {
@@ -69,15 +69,26 @@ public class Solution implements Runnable {
             t2ColumnPos.add(t2.columnPos.get(str));
         }
 
+        for (int i = 0, itr1 = 0, itr2 = 0; i < tcLink.size(); i++) {
+            if (tcLink.get(i) == 1) {
+                columnsNames.add(t1Columns.get(itr1++));
+            }
+            else {
+                columnsNames.add(t2Columns.get(itr2++));
+            }
+        }
+
         for (int i = 0; i < t1.row; i++) {
             for (int j = 0; j < t2.row; j++) {
                 ArrayList<Integer> rowData = new ArrayList<>();
                 if (t1.tableData.get(i).get(t1CompCol) == t2.tableData.get(j).get(t2CompCol)) {
-                    for (int pos = 0; pos < t1ColumnPos.size(); pos++) {
-                        rowData.add(t1.tableData.get(i).get(t1ColumnPos.get(pos)));
-                    }
-                    for (int pos = 0; pos < t2ColumnPos.size(); pos++) {
-                        rowData.add(t2.tableData.get(j).get(t2ColumnPos.get(pos)));
+                    for (int pos = 0, itr1 = 0, itr2 = 0; pos < tcLink.size(); pos++) {
+                        if (tcLink.get(pos) == 1) {
+                            rowData.add(t1.tableData.get(i).get(t1ColumnPos.get(itr1++)));
+                        }
+                        else {
+                            rowData.add(t2.tableData.get(j).get(t2ColumnPos.get(itr2++)));
+                        }
                     }
                     data.add(rowData);
                 }
@@ -87,20 +98,28 @@ public class Solution implements Runnable {
         return new DatabaseTable("Result", data.size(), columnsNames.size(), columnsNames, columnPos, data);
     }
 
-    private void parseSelect(String s, DatabaseTable t1, DatabaseTable t2,
-                                ArrayList<String> t1Columns, ArrayList<String> t2Columns) {
+    private void parseSelect(String s, DatabaseTable t1, DatabaseTable t2, ArrayList<String> t1Columns,
+                             ArrayList<String> t2Columns, ArrayList<Integer> tcLink) {
         String[] str = s.split("\\.|, | ");
         if (str[1].equals("*")) {
             t1Columns.addAll(t1.columnNames);
             t2Columns.addAll(t2.columnNames);
+            for (int i = 0; i < t1Columns.size(); i++) {
+                tcLink.add(1);
+            }
+            for (int i = 0; i < t2Columns.size(); i++) {
+                tcLink.add(2);
+            }
         }
         else {
             for (int i = 1; i < str.length; i+=2) {
                 if (tableList.get(str[i]) == t1 || tableShortName.get(str[i]) == t1) {
                     t1Columns.add(str[i+1]);
+                    tcLink.add(1);
                 }
                 else {
                     t2Columns.add(str[i+1]);
+                    tcLink.add(2);
                 }
             }
         }
