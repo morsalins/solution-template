@@ -1,6 +1,7 @@
 package com.tigerit.exam;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -33,5 +34,9 @@ public class IO {
 
     public static void printLine(Object value) {
         System.out.println(value);
+    }
+
+    public static void print(Object value) {
+        System.out.print(value);
     }
 }
